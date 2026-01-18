@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environments
+env/
+venv/
+
+# EZKL artifacts
+*.key
+*.ezkl
+*.compiled
+proof.json
+witness.json
+kzg.srs
+
+# ONNX external data
+*.onnx.data
+
+# Protocol runtime files
+challenge.json
+report.json
+
+# OS
+.DS_Store
+backend/corrupttest.py
+backend/create_big_model.py
+backend/smalltest.py
+backend/test_output_change.py
+backend/test_restore.py
