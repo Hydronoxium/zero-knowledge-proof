@@ -62,7 +62,8 @@ def restore_model(model_path: str, secret_key: bytes, challenge: bytes, k: int =
         model_path,
         save_as_external_data=True,
         all_tensors_to_one_file=True,
-        location="model.onnx.data"
+        location=os.path.basename(data_path)
+
     )
 
     if verbose:

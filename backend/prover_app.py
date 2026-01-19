@@ -2,7 +2,7 @@ import json
 from ownership.protocol import respond_to_challenge
 
 SECRET_KEY = b"test_secret_123"
-MODEL_PATH = "model.onnx"
+MODEL_PATH = "big_model.onnx"
 
 with open("challenge.json") as f:
     challenge_hex = json.load(f)["challenge"]

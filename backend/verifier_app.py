@@ -1,4 +1,11 @@
 import json, os, secrets, time
+import os
+
+if os.path.exists("challenge.json"):
+    os.remove("challenge.json")
+
+if os.path.exists("report.json"):
+    os.remove("report.json")
 
 challenge = secrets.token_hex(16)
 

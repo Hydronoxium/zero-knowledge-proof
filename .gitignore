@@ -16,7 +16,7 @@ kzg.srs
 
 # ONNX external data
 *.onnx.data
-
+*.onnx
 # Protocol runtime files
 challenge.json
 report.json

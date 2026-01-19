@@ -74,14 +74,15 @@ def corrupt_model(model_path: str, secret_key: bytes, challenge: bytes, k: int =
     if os.path.exists(data_path):
         os.remove(data_path)
 
-    # Save model safely with external data
     onnx.save_model(
         model,
         model_path,
         save_as_external_data=True,
         all_tensors_to_one_file=True,
-        location="model.onnx.data"
+        location=os.path.basename(data_path)
     )
+
+
 
     if verbose:
         return corrupted_info
