@@ -2,3 +2,6 @@ ezkl
 fastapi
 torch
 onnx
+onnxruntime
+onnxscript
+react
