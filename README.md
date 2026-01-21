@@ -72,6 +72,17 @@ pip install ezkl
 
 ## One-Command Setup (Generates everything)
 
+### Note for WSL Users : Run the following code before running the setup
+
+```bash
+# Install dos2unix if you don't have it
+sudo apt-get update && sudo apt-get install dos2unix
+
+# Convert the script
+dos2unix setup_ezkl.sh
+```
+
+### Setup:
 ```bash
 bash scripts/setup_ezkl.sh
 ```
