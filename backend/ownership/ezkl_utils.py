@@ -1,5 +1,6 @@
 import subprocess
 import os
+import shutil
 
 BACKEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -26,8 +27,16 @@ def run_cmd(cmd: list[str]):
 
 
 def generate_ezkl_proof(compiled_circuit_path: str, input_json: str = "input.json"):
+    # Ensure keys exist under ezkl-expected names
+    if not os.path.exists("pk.key"):
+        if not os.path.exists("pk_reference.key"):
+            raise RuntimeError("Missing pk_reference.key")
+        shutil.copy("pk_reference.key", "pk.key")
 
-    print("[ezkl] backend dir:", BACKEND_DIR)
+    if not os.path.exists("vk.key"):
+        if not os.path.exists("vk_reference.key"):
+            raise RuntimeError("Missing vk_reference.key")
+        shutil.copy("vk_reference.key", "vk.key")
 
     run_cmd([
         "ezkl", "gen-witness",
@@ -40,17 +49,12 @@ def generate_ezkl_proof(compiled_circuit_path: str, input_json: str = "input.jso
         "--compiled-circuit", compiled_circuit_path
     ])
 
-    proof_path = os.path.join(BACKEND_DIR, "proof.json")
-    
-
-    
-
-    if not os.path.exists(proof_path):
+    if not os.path.exists("proof.json"):
         raise RuntimeError("proof.json was not generated")
 
-    print("[ezkl] Proof generated at:", proof_path)
+    return "proof.json"
 
-    return proof_path
+
 
 
 def verify_ezkl_proof(proof_path: str, vk_path: str):

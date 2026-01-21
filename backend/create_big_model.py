@@ -45,7 +45,7 @@ def main():
         "big_model_raw.onnx",
         input_names=["input"],
         output_names=["output"],
-        opset_version=13,
+        opset_version=18,
         do_constant_folding=True
     )
 

@@ -1,155 +1,229 @@
-# Running the Model Ownership Protocol (Local Two-Window Demo)
+# Zero-Knowledge Neural Network Ownership Verification
 
-This project demonstrates neural network ownership verification using deterministic weight corruption and restoration on ONNX models.
+This project implements a **replay-safe cryptographic protocol** for verifying ownership of a neural network model using:
 
-The demo runs locally using two terminals:
+* deterministic weight corruption
+* challenge–response authentication
+* zero-knowledge proofs (via `ezkl`)
+* ONNX inference consistency checks
 
-* **Verifier window** – generates a challenge
-* **Prover window** – corrupts + restores the model and responds
-
-No server is required.
-
----
-
-## 1. Prerequisites
-
-* Python **3.9+**
-* Git
-* Linux / macOS / Windows (WSL works)
+The verifier can confirm that a prover owns the original model **without learning the model weights**.
 
 ---
 
-## 2. Clone the repository
+## Features
+
+* Deterministic secret weight indexing using HMAC
+* Model corruption and restoration protocol
+* ONNX inference validation (L2 output difference)
+* Zero-knowledge proof of correct model execution
+* Replay-protected interactive protocol
+* Fully reproducible setup
+* No model or keys committed to GitHub
+
+---
+
+## Architecture
+
+```
+Verifier  ──challenge──▶  Prover
+Verifier  ◀──report + ZK proof──  Prover
+```
+
+The prover demonstrates ownership by:
+
+1. Running inference on the clean model
+2. Corrupting secret weights determined by (secret_key, challenge)
+3. Showing measurable output change
+4. Restoring the model
+5. Producing a ZK proof of correct execution
+
+---
+
+## Requirements
+
+* Python 3.10+
+* Linux or macOS
+* 8GB RAM recommended
+* Rust (for ezkl)
+* Internet connection (first setup only)
+
+---
+
+## Installation
 
 ```bash
-git clone https://github.com/shreesha84/zero-knowledge-proof.git
+git clone https://github.com/shreesha84/zero-knowledge-proof
 cd zero-knowledge-proof
-```
 
----
+python -m venv env
+source env/bin/activate
 
-## 3. Create and activate a virtual environment
-
-```bash
-python3 -m venv env
-source env/bin/activate        # Linux / macOS
-# OR
-env\Scripts\activate           # Windows
-```
-
----
-
-## 4. Install dependencies
-
-```bash
 pip install -r requirements.txt
 ```
 
----
-
-## 5. Move to backend directory
+Install ezkl:
 
 ```bash
-cd backend
+pip install ezkl
 ```
 
 ---
 
-## 6. Terminal 1 – Start the verifier
-
-Open a new terminal, activate the same environment, then:
+## One-Command Setup (Generates everything)
 
 ```bash
-cd zero-knowledge-proof/backend
-python verifier_app.py
+bash scripts/setup_ezkl.sh
+```
+
+This will automatically:
+
+* generate a large ONNX model
+* compile the circuit
+* generate SRS
+* generate proving + verification keys
+* validate the installation
+
+No manual steps required.
+
+---
+
+## Running the Protocol Demo
+
+Open **two terminals**.
+
+---
+
+### Terminal 1 — Verifier
+
+```bash
+source env/bin/activate
+python backend/verifier_app.py
 ```
 
 You will see:
 
 ```
-Challenge generated: <hex string>
+Session ID: ...
+Challenge: ...
 Waiting for prover...
 ```
 
-This creates `challenge.json`.
-
 ---
 
-## 7. Terminal 2 – Start the prover
-
-In another terminal:
+### Terminal 2 — Prover
 
 ```bash
-cd zero-knowledge-proof/backend
-source ../env/bin/activate     # if not already active
-python prover_app.py
+source env/bin/activate
+python backend/prover_app.py
 ```
 
-You will see:
+Expected output:
 
-* the received challenge
-* corrupted weight preview
-* output difference
-* model restoration confirmation
-
-This creates `report.json`.
+* challenge received
+* corruption report
+* proof generated
+* model restored
 
 ---
 
-## 8. Verifier completes automatically
-
-Return to Terminal 1.
-
-You should see:
+### Verifier output
 
 ```
-=== REPORT RECEIVED ===
+ZK proof valid
+Challenge verified
+Session valid
 Corruption confirmed
-Ownership protocol completed.
+Ownership protocol completed successfully
 ```
 
 ---
 
-## 9. What just happened
+## Protocol Security
 
-1. Verifier generated a random challenge
-2. Prover deterministically corrupted hidden model weights
-3. Model output changed
-4. Prover restored the model
-5. Verifier confirmed the response
+The protocol provides:
 
-This proves ownership without revealing model weights.
-
----
-
-## 10. Notes
-
-* The demo uses a small ONNX model (`model_small.onnx`) included in the repo.
-* No trained private models or keys are required.
-* Temporary files created during execution:
-
-  * `challenge.json`
-  * `report.json`
-
-These can be deleted after each run.
+* Ownership verification without revealing weights
+* Deterministic secret weight selection
+* Replay protection (session_id + timestamp)
+* Proof soundness via zk-SNARKs
+* Resistance to model substitution attacks (optional extension)
 
 ---
 
-## 11. Troubleshooting
+## File Structure
 
-If you see missing package errors:
+```
+backend/
+  ownership/
+    protocol.py
+    corrupt.py
+    restore.py
+    derive_indices.py
+    weight_index.py
+    ezkl_utils.py
+  prover_app.py
+  verifier_app.py
+  create_big_model.py
+  input.json
+
+scripts/
+  setup_ezkl.sh
+  validate_install.py
+```
+
+---
+
+## Reproducibility
+
+No models, keys, proofs, or circuits are committed.
+
+Everything is deterministically generated by:
 
 ```bash
-pip install -r requirements.txt
+bash scripts/setup_ezkl.sh
 ```
 
-If ONNX fails to load:
+You can verify installation with:
 
 ```bash
-pip install onnx onnxruntime numpy
+python scripts/validate_install.py
 ```
 
 ---
 
+## Threat Model (Summary)
 
+| Adversary         | Outcome           |
+| ----------------- | ----------------- |
+| Passive observer  | learns nothing    |
+| Replay attacker   | rejected          |
+| Model thief       | fails challenge   |
+| Verifier cheating | no weight leakage |
 
+---
+
+## Known Limitations
+
+* Proof generation is computationally expensive
+* Only feed-forward models tested
+* Fixed input shape required
+* Demo uses local file communication
+
+---
+
+## Future Work
+
+* Model hash binding into proof
+* Web interface
+* Docker deployment
+* Performance benchmarking suite
+* Support for CNNs and transformers
+
+---
+
+## License
+
+MIT License
+
+---

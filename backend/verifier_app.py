@@ -1,56 +1,66 @@
-from ownership.ezkl_utils import verify_ezkl_proof
 import json, os, secrets, time
+from ownership.ezkl_utils import verify_ezkl_proof
 
-# Clean stale files
-if os.path.exists("challenge.json"):
-    os.remove("challenge.json")
+SESSION_TIMEOUT = 300  # seconds
 
-if os.path.exists("report.json"):
-    os.remove("report.json")
+def now():
+    return int(time.time())
 
-# Generate challenge
+for f in ["challenge.json", "report.json"]:
+    if os.path.exists(f):
+        os.remove(f)
+
+session_id = secrets.token_hex(16)
 challenge = secrets.token_hex(16)
+timestamp = now()
+
+challenge_obj = {
+    "session_id": session_id,
+    "challenge": challenge,
+    "timestamp": timestamp,
+}
 
 with open("challenge.json", "w") as f:
-    json.dump({"challenge": challenge}, f)
+    json.dump(challenge_obj, f)
 
-print("Challenge generated:", challenge)
+print("Session ID:", session_id)
+print("Challenge:", challenge)
 print("Waiting for prover...")
 
-# Wait for prover response
 while not os.path.exists("report.json"):
     time.sleep(1)
 
 with open("report.json") as f:
     report = json.load(f)
 
-# ---- ZK verification ----
+# ---- Validation ----
 
-proof_path = report.get("proof_path")
-
-if not proof_path or not os.path.exists(proof_path):
-    print("❌ Missing proof file.")
+if report.get("session_id") != session_id:
+    print("❌ Session ID mismatch")
     exit(1)
-
-ok = verify_ezkl_proof(proof_path, "vk_reference.key")
-
-if not ok:
-    print("❌ ZK proof verification FAILED.")
-    exit(1)
-
-print("✅ ZK proof verification succeeded.")
-print("Ownership verified.")
-
-# ---- Protocol checks ----
-
-print("\n=== REPORT RECEIVED ===")
-print(json.dumps(report, indent=2))
 
 if report.get("challenge") != challenge:
     print("❌ Challenge mismatch")
-elif report.get("l2_difference", 0) > 0:
-    print("✅ Corruption confirmed")
-else:
-    print("❌ No observable corruption")
+    exit(1)
 
-print("\nOwnership protocol completed.")
+if now() - report.get("timestamp", 0) > SESSION_TIMEOUT:
+    print("❌ Session expired")
+    exit(1)
+
+proof_path = report["proof_path"]
+
+if not verify_ezkl_proof(proof_path, "vk_reference.key"):
+    print("❌ ZK proof invalid")
+    exit(1)
+
+print("\n✅ ZK proof valid")
+print("✅ Challenge verified")
+print("✅ Session valid")
+
+if report["l2_difference"] > 0:
+    print("✅ Corruption confirmed")
+
+print("\n=== REPORT ===")
+print(json.dumps(report, indent=2))
+
+print("\nOwnership protocol completed successfully.")
