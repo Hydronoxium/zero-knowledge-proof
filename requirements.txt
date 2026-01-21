@@ -1,7 +1,6 @@
-ezkl
-fastapi
-torch
-onnx
-onnxruntime
-onnxscript
-react
+numpy==1.26.4
+torch==2.1.0
+onnx==1.15.0
+onnxruntime==1.17.0
+ezkl==23.0.3
+tqdm==4.66.1
